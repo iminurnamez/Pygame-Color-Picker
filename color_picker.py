@@ -52,5 +52,6 @@ def color_picker():
 			DISPLAYSURF.blit(elem[0], elem[1])
 		pygame.display.update()
 		fpsClock.tick(FPS)
-		
-color_picker()
+
+if __name__ == "__main__":		
+	color_picker()
