@@ -1,57 +1,80 @@
-import pygame
+import pygame as pg
 import sys
-from pygame import Color
 
-pygame.init()
-DISPLAYSURF = pygame.display.set_mode((600, 480))
-pygame.display.set_caption("Color Picker")
-FPS = 30
-fpsClock = pygame.time.Clock()
 
-text16 = pygame.font.Font("freesansbold.ttf", 16)
+class ColorPicker(object):
+    def __init__(self, screen):
+        self.done = False
+        self.screen = screen
+        self.font = pg.font.Font("freesansbold.ttf", 16)
+        self.clock = pg.time.Clock()
+        self.fps = 30
+        
+        self.square_size = 20
+        self.colors = pg.color.THECOLORS
+        self.labels = []
+        self.color_names = []
+        self.current_color = None
+        
+    def draw(self, surface):
+        self.screen.fill(pg.Color("black"))
+        square_size = 20
+        left = 0
+        top = 0
+        for color in self.colors:
+            pg.draw.rect(self.screen, self.colors[color],
+                               (left, top, square_size, square_size))
+            left += square_size
+            if left + square_size > surface.get_width():
+                top += square_size
+                left = 0
+        for label in self.labels:
+            surface.blit(label[0], label[1])
+            
+    def update(self):
+        self.labels = []
+        left = 0
+        top = 450
+        if self.current_color:
+            rgb_label = self.font.render("{}".format(self.current_color), True,
+                                                     pg.Color("white"), pg.Color("black"))
+            rgb_rect = rgb_label.get_rect(topleft=(left, top))
+            self.labels.append((rgb_label, rgb_rect))
+            left += rgb_rect.width + 10
+        for name in self.color_names:
+            name_text = self.font.render("{0}".format(name), True,
+                                                       pg.Color("white"), pg.Color("black"))
+            name_rect = name_text.get_rect(topleft=(left, top))
+            left = name_rect.right + 20
+            self.labels.append((name_text, name_rect))
+        
+    def event_loop(self):
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                self.done = True
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                self.current_color = self.screen.get_at(event.pos)
+                self.color_names = []
+                for name, value in self.colors.items():
+                    if value == self.current_color:
+                        self.color_names.append(name)
+                        
+    
+    def run(self):    
+        while not self.done:
+            self.event_loop()
+            self.update()
+            self.draw(self.screen)
+            pg.display.update()
+            self.clock.tick(self.fps)
+        
 
-def show_palette(surface, color_dict):
-	square_size = 20
-	left = 0
-	top = 0
-	for color in color_dict:
-		pygame.draw.rect(surface, color_dict[color],(left, top, square_size, square_size))
-		left += square_size
-		if left + square_size > surface.get_width():
-			top += square_size
-			left = 0
+if __name__ == "__main__":      
+    pg.init()
+    screen = pg.display.set_mode((600, 480))
+    pg.display.set_caption("Color Picker")
 
-def color_picker():
-	text_blits = []
-	color_names = []
-	while True:
-		for event in pygame.event.get():
-			if event.type == pygame.QUIT:
-				pygame.quit()
-				sys.exit()
-			elif event.type == pygame.MOUSEBUTTONDOWN:
-				x, y = event.pos
-				current_color = DISPLAYSURF.get_at((x, y))
-				color_names = []
-				text_blits = []
-				for key, value in pygame.color.THECOLORS.items():
-					if value == current_color:
-						color_names.append(key)
-		
-		left = 0
-		top = 450
-		for name in color_names:
-			name_text = text16.render("{0}".format(name), True, Color("white"), Color("black"))
-			name_rect = name_text.get_rect(topleft = (left, top))
-			left = name_rect.right + 20	
-			text_blits.append((name_text, name_rect))
-		
-		DISPLAYSURF.fill(Color("black"))
-		show_palette(DISPLAYSURF, pygame.color.THECOLORS)
-		for elem in text_blits:
-			DISPLAYSURF.blit(elem[0], elem[1])
-		pygame.display.update()
-		fpsClock.tick(FPS)
-
-if __name__ == "__main__":		
-	color_picker()
+    picker = ColorPicker(screen)
+    picker.run()
+    pg.quit()
+    sys.exit()
